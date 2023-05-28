@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -20,15 +21,12 @@ type Mapper struct {
 func (m *Mapper) Map(sourcePath string) (Action, error) {
 	relPath := strings.TrimPrefix(sourcePath, m.SourceDir)
 	targetPath := path.Join(m.TargetDir, relPath)
-	return CreateLinkAction{From: targetPath, To: sourcePath}, nil
-}
 
-type FileExistsError struct {
-	Path string
-}
-
-func (e FileExistsError) Error() string {
-	return fmt.Sprint("existing file:", e.Path)
+	_, err := m.FS.Stat(targetPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return CreateLinkAction{From: targetPath, To: sourcePath}, nil
+	}
+	return nil, fmt.Errorf("%s: %w", targetPath, fs.ErrExist)
 }
 
 type NoSuchDirectoryError struct {

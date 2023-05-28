@@ -1,12 +1,14 @@
 package main
 
 import (
+	"errors"
+	"io/fs"
 	"path"
 	"testing"
 	"testing/fstest"
 )
 
-func TestTargetHasNoEntryAtSourceFilePath(t *testing.T) {
+func TestLinkIfSourceFileTargetDoesNotExist(t *testing.T) {
 	fsys := fstest.MapFS{}
 	targetDir := "target-dir"
 	sourceDir := "source-dir"
@@ -16,7 +18,7 @@ func TestTargetHasNoEntryAtSourceFilePath(t *testing.T) {
 	targetPath := path.Join(targetDir, filename)
 
 	fsys[sourcePath] = &fstest.MapFile{}
-    delete(fsys, targetPath) // Does not exist
+	delete(fsys, targetPath) // Does not exist
 
 	mapper := Mapper{FS: fsys, SourceDir: sourceDir, TargetDir: targetDir}
 	action, err := mapper.Map(sourcePath)
@@ -31,7 +33,7 @@ func TestTargetHasNoEntryAtSourceFilePath(t *testing.T) {
 	}
 }
 
-func TestTargetHasExistingFileAtSourceFilePath(t *testing.T) {
+func TestErrorIfSourceFileTargetIsExistingFile(t *testing.T) {
 	fsys := fstest.MapFS{}
 	targetDir := "target-dir"
 	sourceDir := "source-dir"
@@ -46,12 +48,11 @@ func TestTargetHasExistingFileAtSourceFilePath(t *testing.T) {
 	mapper := Mapper{FS: fsys, SourceDir: sourceDir, TargetDir: targetDir}
 	action, err := mapper.Map(sourcePath)
 
-    want := FileExistsError{Path: targetPath}
-    if err != want {
-		t.Errorf("got error %#v, want %#v", err, want)
+	if !errors.Is(err, fs.ErrExist) {
+		t.Errorf("got error %#v, want %s", err, fs.ErrExist.Error())
 	}
 
-    if action != nil {
+	if action != nil {
 		t.Errorf("unexpected action %#v", action)
 	}
 }
