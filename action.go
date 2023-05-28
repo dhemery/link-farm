@@ -1,10 +1,10 @@
 package main
 
-type CreateLink struct {
+type CreateLinkAction struct {
 	From string
 	To   string
 }
 
-func (a CreateLink) Perform() error {
+func (a CreateLinkAction) Perform() error {
 	return nil
 }

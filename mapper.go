@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"path"
 	"strings"
 )
@@ -11,6 +12,7 @@ type Action interface {
 }
 
 type Mapper struct {
+	FS        fs.StatFS
 	SourceDir string
 	TargetDir string
 }
@@ -18,13 +20,21 @@ type Mapper struct {
 func (m *Mapper) Map(sourcePath string) (Action, error) {
 	relPath := strings.TrimPrefix(sourcePath, m.SourceDir)
 	targetPath := path.Join(m.TargetDir, relPath)
-	return CreateLink{From: targetPath, To: sourcePath}, nil
+	return CreateLinkAction{From: targetPath, To: sourcePath}, nil
 }
 
-type NoSuchDirectory struct {
+type FileExistsError struct {
+	Path string
+}
+
+func (e FileExistsError) Error() string {
+	return fmt.Sprint("existing file:", e.Path)
+}
+
+type NoSuchDirectoryError struct {
 	Dir string
 }
 
-func (e NoSuchDirectory) Error() string {
+func (e NoSuchDirectoryError) Error() string {
 	return fmt.Sprint("no such directory:", e.Dir)
 }

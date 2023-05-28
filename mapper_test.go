@@ -1,50 +1,57 @@
 package main
 
 import (
-	"io/fs"
 	"path"
 	"testing"
 	"testing/fstest"
 )
 
+func TestTargetHasNoEntryAtSourceFilePath(t *testing.T) {
+	fsys := fstest.MapFS{}
+	targetDir := "target-dir"
+	sourceDir := "source-dir"
 
-func addDir(fsys fstest.MapFS, path string) {
-    fsys[path] = &fstest.MapFile{Mode: fs.ModeDir}
+	filename := "file"
+	sourcePath := path.Join(sourceDir, filename)
+	targetPath := path.Join(targetDir, filename)
+
+	fsys[sourcePath] = &fstest.MapFile{}
+    delete(fsys, targetPath) // Does not exist
+
+	mapper := Mapper{FS: fsys, SourceDir: sourceDir, TargetDir: targetDir}
+	action, err := mapper.Map(sourcePath)
+
+	want := CreateLinkAction{From: targetPath, To: sourcePath}
+	if action != want {
+		t.Errorf("got action %#v, want %#v", action, want)
+	}
+
+	if err != nil {
+		t.Errorf("unexpected error %s", err)
+	}
 }
 
-func addFile(fsys fstest.MapFS, path string) {
-    fsys[path] = &fstest.MapFile{}
-}
+func TestTargetHasExistingFileAtSourceFilePath(t *testing.T) {
+	fsys := fstest.MapFS{}
+	targetDir := "target-dir"
+	sourceDir := "source-dir"
 
-func addLink(fsys fstest.MapFS, oldname, newname string) {
-    fsys[newname] = &fstest.MapFile{Mode: fs.ModeSymlink, Data: []byte(oldname)}
-}
+	filename := "file"
+	sourcePath := path.Join(sourceDir, filename)
+	targetPath := path.Join(targetDir, filename)
 
-func TestFilePathInSourceRootDoesNotExistInTarget(t *testing.T) {
-    targetDir := "target-dir"
-    sourceDir := "source-dir"
-    fsys := fstest.MapFS{}
+	fsys[sourcePath] = &fstest.MapFile{}
+	fsys[targetPath] = &fstest.MapFile{} // Already exists
 
-    addDir(fsys, targetDir)
+	mapper := Mapper{FS: fsys, SourceDir: sourceDir, TargetDir: targetDir}
+	action, err := mapper.Map(sourcePath)
 
-    baseFileName := "file-in-root"
-    sourcePath := path.Join(sourceDir, baseFileName)
+    want := FileExistsError{Path: targetPath}
+    if err != want {
+		t.Errorf("got error %#v, want %#v", err, want)
+	}
 
-    mapper := Mapper{SourceDir: sourceDir, TargetDir: targetDir}
-
-    action, err := mapper.Map(sourcePath)
-
-    if err != nil {
-        t.Errorf("unexpected error %s", err)
-    }
-
-    targetPath := path.Join(targetDir, baseFileName)
-    want := CreateLink{From: targetPath, To: sourcePath}
-
-    if action != want {
-        t.Errorf("got action %#v, want %#v", action, want)
-    }
-}
-
-func TestTargetHasExistingFileAtFilePathInSourceRoot(t *testing.T) {
+    if action != nil {
+		t.Errorf("unexpected action %#v", action)
+	}
 }
