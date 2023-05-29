@@ -1,3 +1,3 @@
-module dhemery.com/link-farm
+module dhemery.com/tree-farm
 
 go 1.20
