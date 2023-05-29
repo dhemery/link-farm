@@ -22,10 +22,27 @@ func (m *Mapper) Map(sourcePath string) (Action, error) {
 	relPath := strings.TrimPrefix(sourcePath, m.SourceDir)
 	targetPath := path.Join(m.TargetDir, relPath)
 
-	_, err := m.FS.Stat(targetPath)
+	target, err := m.FS.Stat(targetPath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return CreateLinkAction{From: targetPath, To: sourcePath}, nil
 	}
+	if target.IsDir() {
+		entries, _ := fs.ReadDir(m.FS, targetPath)
+		if len(entries) == 0 {
+			return ReplaceWithLink{From: targetPath, To: sourcePath}, nil
+		}
+
+	}
+	source, _ := m.FS.Stat(sourcePath)
+	if source.IsDir() {
+		return m.mapDir(source, sourcePath, target, targetPath)
+	} else {
+		return nil, fs.ErrExist
+	}
+}
+
+func (m *Mapper) mapDir(source fs.FileInfo, sourcePath string,
+	target fs.FileInfo, targetPath string) (Action, error) {
 	return nil, fmt.Errorf("%s: %w", targetPath, fs.ErrExist)
 }
 
