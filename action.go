@@ -7,9 +7,9 @@ type Symlinker interface {
 }
 
 type CreateLink struct {
-	Linker Symlinker
-	From   string
-	To     string
+	Linker      Symlinker
+	ImagePath   string
+	PackagePath string
 }
 
 func (a CreateLink) Perform() error {

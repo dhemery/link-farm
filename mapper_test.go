@@ -14,101 +14,101 @@ func (t testLinker) Symlink(oldname, newname string) error {
 }
 
 type mapperTest struct {
-	Mapper     Mapper
-	SourcePath string
-	Action     Action
-	Error      error
+	Mapper      Mapper
+	PackagePath string
+	Action      Action
+	Error       error
 }
 
 var mapperTests = map[string]mapperTest{
-	"create link to source file if target has no entry": {
+	"create link to package file if install dir has no such path": {
 		Mapper: Mapper{
-			SourceDir: "source-dir",
-			TargetDir: "target-dir",
+			PackageDir: "package-dir",
+			InstallDir: "install-dir",
 			FS: fstest.MapFS{
-				"source-dir/path/to/entry": regularFile(),
-				// Target dir has no entry
+				"package-dir/path/to/item": regularFile(),
+				// Install dir has no such path
 			},
 			Linker: testLinker{},
 		},
-		SourcePath: "source-dir/path/to/entry",
+		PackagePath: "package-dir/path/to/item",
 		Action: CreateLink{
-			Linker: testLinker{},
-			From:   "target-dir/path/to/entry",
-			To:     "source-dir/path/to/entry",
+			Linker:      testLinker{},
+			ImagePath:   "install-dir/path/to/item",
+			PackagePath: "package-dir/path/to/item",
 		},
 	},
-	"create link to source dir if target has no entry": {
+	"create link to package dir if install dir has no such path": {
 		Mapper: Mapper{
-			SourceDir: "source-dir",
-			TargetDir: "target-dir",
+			PackageDir: "package-dir",
+			InstallDir: "install-dir",
 			FS: fstest.MapFS{
-				"source-dir/path/to/entry": directory(),
-				// Target dir has no entry
+				"package-dir/path/to/item": directory(),
+				// Install dir has no such path
 			},
 			Linker: testLinker{},
 		},
-		SourcePath: "source-dir/path/to/entry",
+		PackagePath: "package-dir/path/to/item",
 		Action: CreateLink{
-			Linker: testLinker{},
-			From:   "target-dir/path/to/entry",
-			To:     "source-dir/path/to/entry",
+			Linker:      testLinker{},
+			ImagePath:   "install-dir/path/to/item",
+			PackagePath: "package-dir/path/to/item",
 		},
 	},
-	"cannot link existing target file to source file": {
+	"cannot link existing image file to package file": {
 		Mapper: Mapper{
-			SourceDir: "source-dir",
-			TargetDir: "target-dir",
+			PackageDir: "package-dir",
+			InstallDir: "install-dir",
 			FS: fstest.MapFS{
-				"source-dir/path/to/entry": regularFile(),
-				"target-dir/path/to/entry": regularFile(),
+				"package-dir/path/to/item": regularFile(),
+				"install-dir/path/to/item": regularFile(),
 			},
 		},
-		SourcePath: "source-dir/path/to/entry",
-		Error:      fs.ErrExist,
+		PackagePath: "package-dir/path/to/item",
+		Error:       fs.ErrExist,
 	},
-	"cannot link existing target file to source dir": {
+	"cannot link existing image file to package dir": {
 		Mapper: Mapper{
-			SourceDir: "source-dir",
-			TargetDir: "target-dir",
+			PackageDir: "package-dir",
+			InstallDir: "install-dir",
 			FS: fstest.MapFS{
-				"source-dir/path/to/entry": directory(),
-				"target-dir/path/to/entry": regularFile(),
+				"package-dir/path/to/item": directory(),
+				"install-dir/path/to/item": regularFile(),
 			},
 		},
-		SourcePath: "source-dir/path/to/entry",
-		Error:      fs.ErrExist,
+		PackagePath: "package-dir/path/to/item",
+		Error:       fs.ErrExist,
 	},
-	"cannot link existing target dir to source file": {
+	"cannot link existing image dir to package file": {
 		Mapper: Mapper{
-			SourceDir: "source-dir",
-			TargetDir: "target-dir",
+			PackageDir: "package-dir",
+			InstallDir: "install-dir",
 			FS: fstest.MapFS{
-				"source-dir/path/to/entry": regularFile(),
-				"target-dir/path/to/entry": directory(),
+				"package-dir/path/to/item": regularFile(),
+				"install-dir/path/to/item": directory(),
 			},
 		},
-		SourcePath: "source-dir/path/to/entry",
-		Error:      fs.ErrExist,
+		PackagePath: "package-dir/path/to/item",
+		Error:       fs.ErrExist,
 	},
-	"descend if source and target are both dirs": {
+	"descend if package and image are both dirs": {
 		Mapper: Mapper{
-			SourceDir: "source-dir",
-			TargetDir: "target-dir",
+			PackageDir: "package-dir",
+			InstallDir: "install-dir",
 			FS: fstest.MapFS{
-				"source-dir/path/to/entry": directory(),
-				"target-dir/path/to/entry": directory(),
+				"package-dir/path/to/item": directory(),
+				"install-dir/path/to/item": directory(),
 			},
 		},
-		SourcePath: "source-dir/path/to/entry",
-		Action:     Descend{},
+		PackagePath: "package-dir/path/to/item",
+		Action:      Descend{},
 	},
 }
 
 func TestMapper(t *testing.T) {
 	for name, test := range mapperTests {
 		t.Run(name, func(t *testing.T) {
-			action, err := test.Mapper.Map(test.SourcePath)
+			action, err := test.Mapper.Map(test.PackagePath)
 			if action != test.Action {
 				t.Errorf("got action %#v, want %#v", action, test.Action)
 			}
