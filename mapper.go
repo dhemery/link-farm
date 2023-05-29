@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 )
 
@@ -20,17 +19,9 @@ func (m *Mapper) Map(path string) (Action, error) {
 	if errors.Is(err, fs.ErrNotExist) {
 		return CreateLink{Path: path}, nil
 	}
-	if targetEntry.IsDir() {
-		entries, _ := fs.ReadDir(m.Target, path)
-		if len(entries) == 0 {
-			return ReplaceWithLink{Path: path}, nil
-		}
-
-	}
 	sourceEntry, _ := m.Source.Stat(path)
-	if sourceEntry.IsDir() {
-		return nil, fmt.Errorf("%s: %w", path, fs.ErrExist)
-	} else {
-		return nil, fs.ErrExist
+	if targetEntry.IsDir() && sourceEntry.IsDir() {
+		return Descend{}, nil
 	}
+	return nil, fs.ErrExist
 }

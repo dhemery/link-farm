@@ -8,63 +8,74 @@ import (
 )
 
 type mapperTest struct {
-	GroveFS fstest.MapFS
-	UserFS  fstest.MapFS
-	Path    string
-	Action  Action
-	Error   error
+	SourceFS fstest.MapFS
+	TargetFS fstest.MapFS
+	Path     string
+	Action   Action
+	Error    error
 }
 
 var mapperTests = map[string]mapperTest{
-	"create link to grove file if target has no entry": {
+	"link target to source file if target has no entry": {
 		Path: "path/to/entry",
-		GroveFS: fstest.MapFS{
+		SourceFS: fstest.MapFS{
 			"path/to/entry": regularFile(),
 		},
-		UserFS: fstest.MapFS{}, // No entry at path
-		Action: CreateLink{Path: "path/to/entry"},
-		Error:  nil,
+		TargetFS: fstest.MapFS{}, // No entry at path
+		Action:   CreateLink{Path: "path/to/entry"},
+		Error:    nil,
 	},
-	"create link to grove dir if target has no entry": {
+	"link target to source dir if target has no entry": {
 		Path: "path/to/entry",
-		GroveFS: fstest.MapFS{
-			"path/to/entry": emptyDirectory(),
+		SourceFS: fstest.MapFS{
+			"path/to/entry": directory(),
 		},
-		UserFS: fstest.MapFS{}, // No entry at path
-		Action: CreateLink{Path: "path/to/entry"},
-		Error:  nil,
+		TargetFS: fstest.MapFS{}, // No entry at path
+		Action:   CreateLink{Path: "path/to/entry"},
+		Error:    nil,
 	},
-	"cannot map existing user file to grove file": {
+	"cannot link existing target file to source file": {
 		Path: "path/to/entry",
-		GroveFS: fstest.MapFS{
+		SourceFS: fstest.MapFS{
 			"path/to/entry": regularFile(),
 		},
-		UserFS: fstest.MapFS{
-			"path/to/entry": regularFile(),
-		},
-		Action: nil,
-		Error:  fs.ErrExist,
-	},
-	"cannot map existing user file to grove dir": {
-		Path: "path/to/entry",
-		GroveFS: fstest.MapFS{
-			"path/to/entry": emptyDirectory(),
-		},
-		UserFS: fstest.MapFS{
+		TargetFS: fstest.MapFS{
 			"path/to/entry": regularFile(),
 		},
 		Action: nil,
 		Error:  fs.ErrExist,
 	},
-	"replace empty user dir with link to source dir": {
+	"cannot link existing target file to source dir": {
 		Path: "path/to/entry",
-		GroveFS: fstest.MapFS{
-			"path/to/entry": emptyDirectory(),
+		SourceFS: fstest.MapFS{
+			"path/to/entry": directory(),
 		},
-		UserFS: fstest.MapFS{
-			"path/to/entry": emptyDirectory(),
+		TargetFS: fstest.MapFS{
+			"path/to/entry": regularFile(),
 		},
-		Action: ReplaceWithLink{Path: "path/to/entry"},
+		Action: nil,
+		Error:  fs.ErrExist,
+	},
+	"cannot link existing target dir to source file": {
+		Path: "path/to/entry",
+		SourceFS: fstest.MapFS{
+			"path/to/entry": regularFile(),
+		},
+		TargetFS: fstest.MapFS{
+			"path/to/entry": directory(),
+		},
+		Action: nil,
+		Error:  fs.ErrExist,
+	},
+	"descend if source and target are both dirs": {
+		Path: "path/to/entry",
+		SourceFS: fstest.MapFS{
+			"path/to/entry": directory(),
+		},
+		TargetFS: fstest.MapFS{
+			"path/to/entry": directory(),
+		},
+		Action: Descend{},
 		Error:  nil,
 	},
 }
@@ -73,7 +84,7 @@ func TestMapper(t *testing.T) {
 	for name, test := range mapperTests {
 		t.Run(name, func(t *testing.T) {
 
-			mapper := Mapper{Source: test.GroveFS, Target: test.UserFS}
+			mapper := Mapper{Source: test.SourceFS, Target: test.TargetFS}
 			action, err := mapper.Map(test.Path)
 			if action != test.Action {
 				t.Errorf("got action %#v, want %#v", action, test.Action)
@@ -85,7 +96,7 @@ func TestMapper(t *testing.T) {
 	}
 }
 
-func emptyDirectory() *fstest.MapFile {
+func directory() *fstest.MapFile {
 	return &fstest.MapFile{Mode: 0644 | fs.ModeDir}
 }
 
