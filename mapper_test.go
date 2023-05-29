@@ -7,85 +7,108 @@ import (
 	"testing/fstest"
 )
 
+type testLinker struct{}
+
+func (t testLinker) Symlink(oldname, newname string) error {
+	return nil
+}
+
 type mapperTest struct {
-	SourceFS fstest.MapFS
-	TargetFS fstest.MapFS
-	Path     string
-	Action   Action
-	Error    error
+	Mapper     Mapper
+	SourcePath string
+	Action     Action
+	Error      error
 }
 
 var mapperTests = map[string]mapperTest{
-	"link target to source file if target has no entry": {
-		Path: "path/to/entry",
-		SourceFS: fstest.MapFS{
-			"path/to/entry": regularFile(),
+	"create link to source file if target has no entry": {
+		Mapper: Mapper{
+			SourceDir: "source-dir",
+			TargetDir: "target-dir",
+			FS: fstest.MapFS{
+				"source-dir/path/to/entry": regularFile(),
+				// Target dir has no entry
+			},
+			Linker: testLinker{},
 		},
-		TargetFS: fstest.MapFS{}, // No entry at path
-		Action:   CreateLink{Path: "path/to/entry"},
-		Error:    nil,
+		SourcePath: "source-dir/path/to/entry",
+		Action: CreateLink{
+			Linker: testLinker{},
+			From:   "target-dir/path/to/entry",
+			To:     "source-dir/path/to/entry",
+		},
 	},
-	"link target to source dir if target has no entry": {
-		Path: "path/to/entry",
-		SourceFS: fstest.MapFS{
-			"path/to/entry": directory(),
+	"create link to source dir if target has no entry": {
+		Mapper: Mapper{
+			SourceDir: "source-dir",
+			TargetDir: "target-dir",
+			FS: fstest.MapFS{
+				"source-dir/path/to/entry": directory(),
+				// Target dir has no entry
+			},
+			Linker: testLinker{},
 		},
-		TargetFS: fstest.MapFS{}, // No entry at path
-		Action:   CreateLink{Path: "path/to/entry"},
-		Error:    nil,
+		SourcePath: "source-dir/path/to/entry",
+		Action: CreateLink{
+			Linker: testLinker{},
+			From:   "target-dir/path/to/entry",
+			To:     "source-dir/path/to/entry",
+		},
 	},
 	"cannot link existing target file to source file": {
-		Path: "path/to/entry",
-		SourceFS: fstest.MapFS{
-			"path/to/entry": regularFile(),
+		Mapper: Mapper{
+			SourceDir: "source-dir",
+			TargetDir: "target-dir",
+			FS: fstest.MapFS{
+				"source-dir/path/to/entry": regularFile(),
+				"target-dir/path/to/entry": regularFile(),
+			},
 		},
-		TargetFS: fstest.MapFS{
-			"path/to/entry": regularFile(),
-		},
-		Action: nil,
-		Error:  fs.ErrExist,
+		SourcePath: "source-dir/path/to/entry",
+		Error:      fs.ErrExist,
 	},
 	"cannot link existing target file to source dir": {
-		Path: "path/to/entry",
-		SourceFS: fstest.MapFS{
-			"path/to/entry": directory(),
+		Mapper: Mapper{
+			SourceDir: "source-dir",
+			TargetDir: "target-dir",
+			FS: fstest.MapFS{
+				"source-dir/path/to/entry": directory(),
+				"target-dir/path/to/entry": regularFile(),
+			},
 		},
-		TargetFS: fstest.MapFS{
-			"path/to/entry": regularFile(),
-		},
-		Action: nil,
-		Error:  fs.ErrExist,
+		SourcePath: "source-dir/path/to/entry",
+		Error:      fs.ErrExist,
 	},
 	"cannot link existing target dir to source file": {
-		Path: "path/to/entry",
-		SourceFS: fstest.MapFS{
-			"path/to/entry": regularFile(),
+		Mapper: Mapper{
+			SourceDir: "source-dir",
+			TargetDir: "target-dir",
+			FS: fstest.MapFS{
+				"source-dir/path/to/entry": regularFile(),
+				"target-dir/path/to/entry": directory(),
+			},
 		},
-		TargetFS: fstest.MapFS{
-			"path/to/entry": directory(),
-		},
-		Action: nil,
-		Error:  fs.ErrExist,
+		SourcePath: "source-dir/path/to/entry",
+		Error:      fs.ErrExist,
 	},
 	"descend if source and target are both dirs": {
-		Path: "path/to/entry",
-		SourceFS: fstest.MapFS{
-			"path/to/entry": directory(),
+		Mapper: Mapper{
+			SourceDir: "source-dir",
+			TargetDir: "target-dir",
+			FS: fstest.MapFS{
+				"source-dir/path/to/entry": directory(),
+				"target-dir/path/to/entry": directory(),
+			},
 		},
-		TargetFS: fstest.MapFS{
-			"path/to/entry": directory(),
-		},
-		Action: Descend{},
-		Error:  nil,
+		SourcePath: "source-dir/path/to/entry",
+		Action:     Descend{},
 	},
 }
 
 func TestMapper(t *testing.T) {
 	for name, test := range mapperTests {
 		t.Run(name, func(t *testing.T) {
-
-			mapper := Mapper{Source: test.SourceFS, Target: test.TargetFS}
-			action, err := mapper.Map(test.Path)
+			action, err := test.Mapper.Map(test.SourcePath)
 			if action != test.Action {
 				t.Errorf("got action %#v, want %#v", action, test.Action)
 			}
