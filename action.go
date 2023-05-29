@@ -1,19 +1,20 @@
 package main
 
-type CreateLinkAction struct {
-	From string
-	To   string
+type source interface{}
+type target interface{}
+
+type CreateLink struct {
+	Path string
 }
 
-func (a CreateLinkAction) Perform() error {
+func (a CreateLink) Perform( s source, t target) error {
 	return nil
 }
 
 type ReplaceWithLink struct {
-	From string
-	To   string
+	Path string
 }
 
-func (a ReplaceWithLink) Perform() error {
+func (a ReplaceWithLink) Perform(s source, t target) error {
 	return nil
 }

@@ -4,52 +4,33 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"path"
-	"strings"
 )
 
 type Action interface {
-	Perform() error
+	Perform(s source, t target) error
 }
 
 type Mapper struct {
-	FS        fs.StatFS
-	SourceDir string
-	TargetDir string
+	Source fs.StatFS
+	Target fs.StatFS
 }
 
-func (m *Mapper) Map(sourcePath string) (Action, error) {
-	relPath := strings.TrimPrefix(sourcePath, m.SourceDir)
-	targetPath := path.Join(m.TargetDir, relPath)
-
-	target, err := m.FS.Stat(targetPath)
+func (m *Mapper) Map(path string) (Action, error) {
+	targetEntry, err := m.Target.Stat(path)
 	if errors.Is(err, fs.ErrNotExist) {
-		return CreateLinkAction{From: targetPath, To: sourcePath}, nil
+		return CreateLink{Path: path}, nil
 	}
-	if target.IsDir() {
-		entries, _ := fs.ReadDir(m.FS, targetPath)
+	if targetEntry.IsDir() {
+		entries, _ := fs.ReadDir(m.Target, path)
 		if len(entries) == 0 {
-			return ReplaceWithLink{From: targetPath, To: sourcePath}, nil
+			return ReplaceWithLink{Path: path}, nil
 		}
 
 	}
-	source, _ := m.FS.Stat(sourcePath)
-	if source.IsDir() {
-		return m.mapDir(source, sourcePath, target, targetPath)
+	sourceEntry, _ := m.Source.Stat(path)
+	if sourceEntry.IsDir() {
+		return nil, fmt.Errorf("%s: %w", path, fs.ErrExist)
 	} else {
 		return nil, fs.ErrExist
 	}
-}
-
-func (m *Mapper) mapDir(source fs.FileInfo, sourcePath string,
-	target fs.FileInfo, targetPath string) (Action, error) {
-	return nil, fmt.Errorf("%s: %w", targetPath, fs.ErrExist)
-}
-
-type NoSuchDirectoryError struct {
-	Dir string
-}
-
-func (e NoSuchDirectoryError) Error() string {
-	return fmt.Sprint("no such directory:", e.Dir)
 }
