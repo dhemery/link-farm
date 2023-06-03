@@ -5,121 +5,76 @@ import (
 	"io/fs"
 	"testing"
 	"testing/fstest"
+	"time"
 )
 
-type testLinker struct{}
-
-func (t testLinker) Symlink(oldname, newname string) error {
-	return nil
-}
-
 type mapperTest struct {
-	Mapper      Mapper
-	PackagePath string
-	Action      Action
-	Error       error
+	PackageEntry *fstest.MapFile
+	InstallEntry *fstest.MapFile
+	WantLink     bool
+	WantError    error
 }
 
 var mapperTests = map[string]mapperTest{
-	"create link to package file if install dir has no such path": {
-		Mapper: Mapper{
-			PackageDir: "package-dir",
-			InstallDir: "install-dir",
-			FS: fstest.MapFS{
-				"package-dir/path/to/item": regularFile(),
-				// Install dir has no such path
-			},
-			Linker: testLinker{},
-		},
-		PackagePath: "package-dir/path/to/item",
-		Action: CreateLink{
-			Linker:      testLinker{},
-			ImagePath:   "install-dir/path/to/item",
-			PackagePath: "package-dir/path/to/item",
-		},
+	"link to package file if install dir has no such path": {
+		PackageEntry: regularFile(),
+		InstallEntry: nil,
+		WantLink:     true,
+		WantError:    nil,
 	},
-	"create link to package dir if install dir has no such path": {
-		Mapper: Mapper{
-			PackageDir: "package-dir",
-			InstallDir: "install-dir",
-			FS: fstest.MapFS{
-				"package-dir/path/to/item": directory(),
-				// Install dir has no such path
-			},
-			Linker: testLinker{},
-		},
-		PackagePath: "package-dir/path/to/item",
-		Action: CreateLink{
-			Linker:      testLinker{},
-			ImagePath:   "install-dir/path/to/item",
-			PackagePath: "package-dir/path/to/item",
-		},
-		Error: fs.SkipDir,
+	"link to package dir if install dir has no such path": {
+		PackageEntry: directory(),
+		InstallEntry: nil,
+		WantLink:     true,
+		WantError:    nil,
 	},
 	"cannot link existing image file to package file": {
-		Mapper: Mapper{
-			PackageDir: "package-dir",
-			InstallDir: "install-dir",
-			FS: fstest.MapFS{
-				"package-dir/path/to/item": regularFile(),
-				"install-dir/path/to/item": regularFile(),
-			},
-		},
-		PackagePath: "package-dir/path/to/item",
-		Error:       fs.ErrExist,
+		PackageEntry: regularFile(),
+		InstallEntry: regularFile(),
+		WantLink:     false,
+		WantError:    fs.ErrExist,
 	},
 	"cannot link existing image file to package dir": {
-		Mapper: Mapper{
-			PackageDir: "package-dir",
-			InstallDir: "install-dir",
-			FS: fstest.MapFS{
-				"package-dir/path/to/item": directory(),
-				"install-dir/path/to/item": regularFile(),
-			},
-		},
-		PackagePath: "package-dir/path/to/item",
-		Error:       fs.ErrExist,
+		PackageEntry: directory(),
+		InstallEntry: regularFile(),
+		WantLink:     false,
+		WantError:    fs.ErrExist,
 	},
 	"cannot link existing image dir to package file": {
-		Mapper: Mapper{
-			PackageDir: "package-dir",
-			InstallDir: "install-dir",
-			FS: fstest.MapFS{
-				"package-dir/path/to/item": regularFile(),
-				"install-dir/path/to/item": directory(),
-			},
-		},
-		PackagePath: "package-dir/path/to/item",
-		Error:       fs.ErrExist,
+		PackageEntry: regularFile(),
+		InstallEntry: directory(),
+		WantLink:     false,
+		WantError:    fs.ErrExist,
 	},
 	"continue walking with no action if package and image are both dirs": {
-		Mapper: Mapper{
-			PackageDir: "package-dir",
-			InstallDir: "install-dir",
-			FS: fstest.MapFS{
-				"package-dir/path/to/item": directory(),
-				"install-dir/path/to/item": directory(),
-			},
-		},
-		PackagePath: "package-dir/path/to/item",
-		Action:      nil, // No action ...
-		Error:       nil, // ... but continue walking
+		PackageEntry: directory(),
+		InstallEntry: directory(),
+		WantLink:     false, // No link ..
+		WantError:    nil,   // ... but no error, so continue walking
 	},
 }
 
 func TestMapper(t *testing.T) {
 	for name, test := range mapperTests {
 		t.Run(name, func(t *testing.T) {
-			action, err := test.Mapper.Map(test.PackagePath)
-			if action != test.Action {
-				t.Errorf("got action %#v, want %#v", action, test.Action)
+			entryPath := "path/to/entry"
+			fsys := fstest.MapFS{
+				entryPath: test.InstallEntry,
 			}
-			if !errors.Is(err, test.Error) {
-				t.Errorf(`got error %v, want "%v"`, err, test.Error)
+			mapper := Mapper{InstallFS: fsys}
+
+			packageEntry := dirEntry{"entry", test.PackageEntry}
+			link, err := mapper.Map(packageEntry, entryPath)
+			if link != test.WantLink {
+				t.Errorf("got link %#v, want %#v", link, test.WantLink)
+			}
+			if !errors.Is(err, test.WantError) {
+				t.Errorf(`got error %v, want "%v"`, err, test.WantError)
 			}
 		})
 	}
 }
+
 
 func directory() *fstest.MapFile {
 	return &fstest.MapFile{Mode: 0644 | fs.ModeDir}
@@ -127,4 +82,41 @@ func directory() *fstest.MapFile {
 
 func regularFile() *fstest.MapFile {
 	return &fstest.MapFile{Mode: 0644}
+}
+
+type dirEntry struct {
+	name string
+	file *fstest.MapFile
+}
+
+func (e dirEntry) Info() (fs.FileInfo, error) {
+	return e, nil
+}
+
+func (e dirEntry) Mode() fs.FileMode {
+	return e.file.Mode
+}
+
+func (e dirEntry) IsDir() bool {
+	return e.file.Mode.IsDir()
+}
+
+func (dirEntry) ModTime() time.Time {
+	panic("unimplemented")
+}
+
+func (e dirEntry) Name() string {
+	return e.name
+}
+
+func (e dirEntry) Size() int64 {
+	return int64(len(e.file.Data))
+}
+
+func (dirEntry) Sys() any {
+	return nil
+}
+
+func (e dirEntry) Type() fs.FileMode {
+	return e.Mode()
 }
