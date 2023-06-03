@@ -54,6 +54,7 @@ var mapperTests = map[string]mapperTest{
 			ImagePath:   "install-dir/path/to/item",
 			PackagePath: "package-dir/path/to/item",
 		},
+		Error: fs.SkipDir,
 	},
 	"cannot link existing image file to package file": {
 		Mapper: Mapper{
@@ -91,7 +92,7 @@ var mapperTests = map[string]mapperTest{
 		PackagePath: "package-dir/path/to/item",
 		Error:       fs.ErrExist,
 	},
-	"descend if package and image are both dirs": {
+	"continue walking with no action if package and image are both dirs": {
 		Mapper: Mapper{
 			PackageDir: "package-dir",
 			InstallDir: "install-dir",
@@ -101,7 +102,8 @@ var mapperTests = map[string]mapperTest{
 			},
 		},
 		PackagePath: "package-dir/path/to/item",
-		Action:      Descend{},
+		Action:      nil, // No action ...
+		Error:       nil, // ... but continue walking
 	},
 }
 

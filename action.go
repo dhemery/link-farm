@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 type Symlinker interface {
 	Symlink(oldname, newname string) error
@@ -16,8 +18,9 @@ func (a CreateLink) Perform() error {
 	return nil
 }
 
-type Descend struct{}
+type MapChildren struct{}
 
-func (a Descend) Perform() error {
-	return errors.New("Descend action was performed")
+func (a MapChildren) Perform() error {
+	return errors.New("MapChildren action was performed")
 }
+

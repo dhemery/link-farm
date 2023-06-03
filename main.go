@@ -1,24 +1,23 @@
 package main
 
-
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 )
 
 
 func main() {
-	farm := "example/farm"
-	target := "example/target"
-	if err :=linkFarm(farm, target); err != nil {
+	fsys := os.DirFS("example")
+	if err :=linkFarm(fsys, "farm", "target"); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 }
 
-func linkFarm (farm, target string) error {
+func linkFarm (fsys fs.FS, farm, target string) error {
 	errs := []error{}
-	farmEntries, err := os.ReadDir(farm)
+	farmEntries, err := fs.ReadDir(fsys, farm)
 	if err != nil {
 		return err
 	}
@@ -27,7 +26,7 @@ func linkFarm (farm, target string) error {
 			continue
 		}
 		pkg := path.Join(farm, e.Name())
-		if err := linkPackage(pkg, target); err != nil {
+		if err := linkPackage(fsys, pkg, target); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -37,8 +36,15 @@ func linkFarm (farm, target string) error {
 	return nil
 }
 
-func linkPackage(pkg, target string) error {
-	fmt.Println("linking package", pkg, "to target", target)
-	return nil
+func linkPackage(fsys fs.FS, pkg, target string) error {
+	m := Mapper{FS: fsys, PackageDir: pkg, InstallDir: target}
+	return fs.WalkDir(fsys, pkg, entryAction(m))
 }
 
+func entryAction(m Mapper) fs.WalkDirFunc {
+	return func(path string, d os.DirEntry, errIn error) error {
+		mapped, err := m.Map(path)
+		fmt.Printf("mapping %s with %#v\n", path,  mapped)
+		return err
+	}
+}
