@@ -7,6 +7,8 @@ import (
 	"testing/fstest"
 )
 
+const farmFile = ".farm"
+
 type pathRuleTest struct {
 	FS   fs.FS
 	Path string
@@ -78,6 +80,21 @@ var installPathRuleTests = map[string]pathRuleTest{
 		Path: "path/to/file",
 		Want: fs.ErrInvalid,
 	},
+	"path to farm dir is permission error": {
+		FS: fstest.MapFS{
+			"root/farm-dir/" + farmFile: regularFile(),
+		},
+		Path: "root/farm-dir",
+		Want: fs.ErrPermission,
+	},
+	"path to dir inside farm is permission error": {
+		FS: fstest.MapFS{
+			"root/farm-dir/" + farmFile:             regularFile(),
+			"root/farm-dir/dir/dir/dir-inside-farm": directory(0755),
+		},
+		Path: "root/farm-dir/dir/dir/dir-inside-farm",
+		Want: fs.ErrPermission,
+	},
 }
 
 func TestPackagePathRules(t *testing.T) {
@@ -94,7 +111,7 @@ func TestPackagePathRules(t *testing.T) {
 func TestInstallPathRules(t *testing.T) {
 	for name, test := range installPathRuleTests {
 		t.Run(name, func(t *testing.T) {
-			got := CheckPackagePath(test.FS, test.Path)
+			got := CheckInstallPath(test.FS, test.Path)
 			if !errors.Is(got, test.Want) {
 				t.Errorf("got error %v, want %v", got, test.Want)
 			}

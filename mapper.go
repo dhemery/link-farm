@@ -6,7 +6,7 @@ import (
 )
 
 type Mapper struct {
-	InstallFS  fs.FS
+	InstallFS fs.FS
 }
 
 func (m *Mapper) Map(packageEntry fs.FileInfo, installPath string) (bool, error) {

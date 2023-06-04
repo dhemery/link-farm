@@ -75,7 +75,6 @@ func TestMapper(t *testing.T) {
 	}
 }
 
-
 func directory(mode fs.FileMode) *fstest.MapFile {
 	return &fstest.MapFile{Mode: mode | fs.ModeDir}
 }
