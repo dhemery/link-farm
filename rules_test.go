@@ -7,8 +7,6 @@ import (
 	"testing/fstest"
 )
 
-const farmFile = ".farm"
-
 type pathRuleTest struct {
 	FS   fs.FS
 	Path string
@@ -82,14 +80,14 @@ var installPathRuleTests = map[string]pathRuleTest{
 	},
 	"path to farm dir is permission error": {
 		FS: fstest.MapFS{
-			"root/farm-dir/" + farmFile: regularFile(),
+			"root/farm-dir/.farm": regularFile(),
 		},
 		Path: "root/farm-dir",
 		Want: fs.ErrPermission,
 	},
 	"path to dir inside farm is permission error": {
 		FS: fstest.MapFS{
-			"root/farm-dir/" + farmFile:             regularFile(),
+			"root/farm-dir/.farm":                   regularFile(),
 			"root/farm-dir/dir/dir/dir-inside-farm": directory(0755),
 		},
 		Path: "root/farm-dir/dir/dir/dir-inside-farm",

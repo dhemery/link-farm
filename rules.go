@@ -7,6 +7,11 @@ import (
 	"path"
 )
 
+const (
+	fsRoot       = "."
+	farmFileName = ".farm"
+)
+
 func CheckPackagePath(f fs.FS, p string) error {
 	info, err := fs.Stat(f, p)
 	if err != nil {
@@ -28,16 +33,23 @@ func CheckInstallPath(f fs.FS, p string) error {
 }
 
 func checkNotInFarm(f fs.FS, p string) error {
-	farmFilePath := path.Join(p, ".farm")
-	_, err := fs.Stat(f, farmFilePath)
-	if err == nil {
-		return fmt.Errorf("is in farm %s: %w", farmFilePath, fs.ErrPermission)
+	if err := checkNotFarm(f, p); err != nil {
+		return err
 	}
-	if p == "." {
+	if p == fsRoot {
 		return nil
 	}
 	parent := path.Dir(p)
 	return checkNotInFarm(f, parent)
+}
+
+func checkNotFarm(f fs.FS, p string) error {
+	farmFilePath := path.Join(p, farmFileName)
+	_, err := fs.Stat(f, farmFilePath)
+	if err == nil {
+		return fmt.Errorf("in farm %s: %w", p, fs.ErrPermission)
+	}
+	return nil
 }
 
 func checkCanCreate(f fs.FS, p string) error {
