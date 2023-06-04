@@ -15,7 +15,7 @@ type Planner struct {
 }
 
 type Plan struct {
-	Links    map[string]string
+	Links    []string
 	Problems []error
 }
 
@@ -23,7 +23,14 @@ func (p *Plan) AddProblem(problem error) {
 	p.Problems = append(p.Problems, problem)
 }
 
+func (p *Plan) AddLink(link string) {
+	p.Links = append(p.Links, link)
+}
+
 func (p *Plan) Execute() error {
+	for _, path := range p.Links {
+		fmt.Println("link", path)
+	}
 	return nil
 }
 
@@ -64,35 +71,41 @@ func (p *Planner) Plan() *Plan {
 
 	mapper := Mapper{InstallFS: installFS}
 	for _, packageName := range p.Packages {
-		packagePath := path.Join(p.FarmRoot, packageName)
-		p.PlanPackage(packagePath, mapper, plan)
+		p.PlanPackage(packageName, mapper, plan)
 	}
 
 	return plan
 }
 
 func (p *Planner) PlanPackage(pkgName string, mapper Mapper, plan *Plan) {
-	packageFS, err := fs.Sub(farmFS, pkgName)
+	packagePath := path.Join(p.FarmRoot, pkgName)
+	packageFS, err := fs.Sub(p.FS, packagePath)
 	if err != nil {
-		plan.AddProblem(fmt.Errorf("Make %s FS: %w", pkgName, err))
+		plan.AddProblem(fmt.Errorf("Make package %s FS: %w", packagePath, err))
 		return
 	}
-	packageDirs, err := fs.ReadDir(farmFS, pkgName)
+	packageDirs, err := fs.ReadDir(packageFS, ".")
 	if err != nil {
 		plan.AddProblem(fmt.Errorf("Read package %s: %w", pkgName, err))
 		return
 	}
 	for _, dir := range packageDirs {
-		if err := fs.WalkDir(p.FS, dir.Name(), p.Walker(packageFS, mapper)); err != nil {
+		if err := fs.WalkDir(packageFS, dir.Name(), p.Walker(packageFS, mapper, plan)); err != nil {
 			plan.AddProblem(fmt.Errorf("Walk package %s: %w", pkgName, err))
 		}
 	}
 }
 
-func (p *Planner) Walker(farmFS fs.FS, mapper Mapper) fs.WalkDirFunc {
+func (p *Planner) Walker(fsys fs.FS, mapper Mapper, plan *Plan) fs.WalkDirFunc {
 	return func(path string, d os.DirEntry, errIn error) error {
-		packageEntry, _ := fs.Stat(farmFS, path)
+		packageEntry, _ := fs.Stat(fsys, path)
 		link, err := mapper.Map(packageEntry, path)
+		if link {
+			plan.AddLink(path)
+		}
+		if err != nil {
+			plan.AddProblem(err)
+		}
 		if link || err != nil {
 			return fs.SkipDir
 		}
