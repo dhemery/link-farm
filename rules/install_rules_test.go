@@ -1,4 +1,4 @@
-package main
+package rules
 
 import (
 	"errors"
@@ -7,49 +7,13 @@ import (
 	"testing/fstest"
 )
 
-type pathRuleTest struct {
+type installPathRuleTest struct {
 	FS   fs.FS
 	Path string
 	Want error
 }
 
-var packagePathRuleTests = map[string]pathRuleTest{
-	"path to readable dir is good": {
-		FS: fstest.MapFS{
-			"path/to/readable/dir": directory(0444),
-		},
-		Path: "path/to/readable/dir",
-		Want: nil,
-	},
-	"path to unreadable dir is permission error": {
-		FS: fstest.MapFS{
-			"path/to/unreadable/dir": directory(0333),
-		},
-		Path: "path/to/unreadable/dir",
-		Want: fs.ErrPermission,
-	},
-	"path to link is invalid": {
-		FS: fstest.MapFS{
-			"path/to/link": linkTo("some/place"),
-		},
-		Path: "path/to/link",
-		Want: fs.ErrInvalid,
-	},
-	"path to file is invalid": {
-		FS: fstest.MapFS{
-			"path/to/file": regularFile(),
-		},
-		Path: "path/to/file",
-		Want: fs.ErrInvalid,
-	},
-	"path to non-existent file is not exist error": {
-		FS:   fstest.MapFS{},
-		Path: "path/to/non-existent/file",
-		Want: fs.ErrNotExist,
-	},
-}
-
-var installPathRuleTests = map[string]pathRuleTest{
+var installPathRuleTests = map[string]installPathRuleTest{
 	"path to readable dir is good": {
 		FS: fstest.MapFS{
 			"path/to/readable/dir": directory(0444),
@@ -93,17 +57,6 @@ var installPathRuleTests = map[string]pathRuleTest{
 		Path: "root/farm-dir/dir/dir/dir-inside-farm",
 		Want: fs.ErrPermission,
 	},
-}
-
-func TestPackagePathRules(t *testing.T) {
-	for name, test := range packagePathRuleTests {
-		t.Run(name, func(t *testing.T) {
-			got := CheckPackagePath(test.FS, test.Path)
-			if !errors.Is(got, test.Want) {
-				t.Errorf("got error %v, want %v", got, test.Want)
-			}
-		})
-	}
 }
 
 func TestInstallPathRules(t *testing.T) {

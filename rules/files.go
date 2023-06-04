@@ -1,4 +1,4 @@
-package main
+package rules
 
 import (
 	"errors"
@@ -8,49 +8,8 @@ import (
 )
 
 const (
-	fsRoot       = "."
-	farmFileName = ".farm"
+	fsRoot = "."
 )
-
-func CheckPackagePath(f fs.FS, p string) error {
-	info, err := fs.Stat(f, p)
-	if err != nil {
-		return err
-	}
-
-	return checkReadableDir(info)
-}
-
-func CheckInstallPath(f fs.FS, p string) error {
-	info, err := fs.Stat(f, p)
-	if err != nil {
-		return err
-	}
-	if err = checkReadableDir(info); err != nil {
-		return err
-	}
-	return checkNotInFarm(f, p)
-}
-
-func checkNotInFarm(f fs.FS, p string) error {
-	if err := checkNotFarm(f, p); err != nil {
-		return err
-	}
-	if p == fsRoot {
-		return nil
-	}
-	parent := path.Dir(p)
-	return checkNotInFarm(f, parent)
-}
-
-func checkNotFarm(f fs.FS, p string) error {
-	farmFilePath := path.Join(p, farmFileName)
-	_, err := fs.Stat(f, farmFilePath)
-	if err == nil {
-		return fmt.Errorf("in farm %s: %w", p, fs.ErrPermission)
-	}
-	return nil
-}
 
 func checkCanCreate(f fs.FS, p string) error {
 	parent := path.Dir(p)
