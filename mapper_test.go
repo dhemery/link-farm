@@ -23,7 +23,7 @@ var mapperTests = map[string]mapperTest{
 		WantError:    nil,
 	},
 	"link to package dir if install dir has no such path": {
-		PackageEntry: directory(),
+		PackageEntry: directory(0644),
 		InstallEntry: nil,
 		WantLink:     true,
 		WantError:    nil,
@@ -35,20 +35,20 @@ var mapperTests = map[string]mapperTest{
 		WantError:    fs.ErrExist,
 	},
 	"cannot link existing image file to package dir": {
-		PackageEntry: directory(),
+		PackageEntry: directory(0644),
 		InstallEntry: regularFile(),
 		WantLink:     false,
 		WantError:    fs.ErrExist,
 	},
 	"cannot link existing image dir to package file": {
 		PackageEntry: regularFile(),
-		InstallEntry: directory(),
+		InstallEntry: directory(0644),
 		WantLink:     false,
 		WantError:    fs.ErrExist,
 	},
 	"continue walking with no action if package and image are both dirs": {
-		PackageEntry: directory(),
-		InstallEntry: directory(),
+		PackageEntry: directory(0644),
+		InstallEntry: directory(0644),
 		WantLink:     false, // No link ..
 		WantError:    nil,   // ... but no error, so continue walking
 	},
@@ -76,12 +76,19 @@ func TestMapper(t *testing.T) {
 }
 
 
-func directory() *fstest.MapFile {
-	return &fstest.MapFile{Mode: 0644 | fs.ModeDir}
+func directory(mode fs.FileMode) *fstest.MapFile {
+	return &fstest.MapFile{Mode: mode | fs.ModeDir}
 }
 
 func regularFile() *fstest.MapFile {
 	return &fstest.MapFile{Mode: 0644}
+}
+
+func linkTo(p string) *fstest.MapFile {
+	return &fstest.MapFile{
+		Mode: 0644 | fs.ModeSymlink,
+		Data: []byte(p),
+	}
 }
 
 type dirEntry struct {
