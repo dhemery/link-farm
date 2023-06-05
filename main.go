@@ -20,6 +20,10 @@ func main() {
 
 	exitCode := 0
 
+	if err := rules.CheckIsFarm(root, farmPath); err != nil {
+		log.Printf("invalid farm path %s: %s", installPath, err)
+		exitCode = 1
+	}
 	if err := rules.CheckInstallPath(root, installPath); err != nil {
 		log.Printf("invalid install path %s: %s", installPath, err)
 		exitCode = 1

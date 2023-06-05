@@ -10,6 +10,18 @@ const (
 	farmFileName = ".farm"
 )
 
+func CheckIsFarm(f fs.FS, p string) error {
+	farmFilePath := path.Join(p, farmFileName)
+	info, err := fs.Stat(f, farmFilePath)
+	if err != nil {
+		return fmt.Errorf("missing %s file: %w", farmFileName, fs.ErrInvalid)
+	}
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("%s is not a regular file: %w", farmFilePath, fs.ErrInvalid)
+	}
+	return nil
+}
+
 func checkNotInFarm(f fs.FS, p string) error {
 	if err := checkNotFarm(f, p); err != nil {
 		return err
