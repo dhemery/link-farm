@@ -28,6 +28,13 @@ var installPathRuleTests = map[string]installPathRuleTest{
 		Path: "path/to/unreadable/dir",
 		Want: fs.ErrPermission,
 	},
+	"path to nowhere is not exist error": {
+		FS: fstest.MapFS{
+			"path/to/nowhere": nil,
+		},
+		Path: "path/to/nowhere",
+		Want: fs.ErrNotExist,
+	},
 	"path to link is invalid": {
 		FS: fstest.MapFS{
 			"path/to/link": linkTo("some/place"),
