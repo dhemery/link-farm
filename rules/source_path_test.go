@@ -7,13 +7,13 @@ import (
 	"testing/fstest"
 )
 
-type sourcePathRulesTest struct {
+type sourcePathTest struct {
 	FS   fstest.MapFS
 	Path string
 	Want error
 }
 
-var sourcePathRulesTests = map[string]sourcePathRulesTest{
+var sourcePathTests = map[string]sourcePathTest{
 	"file is good": {
 		FS: fstest.MapFS{
 			"path/to/file": regularFile(),
@@ -37,10 +37,10 @@ var sourcePathRulesTests = map[string]sourcePathRulesTest{
 	},
 }
 
-func TestSourcePathRules(t *testing.T) {
-	for name, test := range sourcePathRulesTests {
+func TestCheckSourcePath(t *testing.T) {
+	for name, test := range sourcePathTests {
 		t.Run(name, func(t *testing.T) {
-			got := CheckSourcePathRules(test.FS, test.Path)
+			got := CheckSourcePath(test.FS, test.Path)
 			if !errors.Is(got, test.Want) {
 				t.Errorf("got error %v, want %v", got, test.Want)
 			}

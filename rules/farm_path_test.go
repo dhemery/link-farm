@@ -7,13 +7,13 @@ import (
 	"testing/fstest"
 )
 
-type farmRuleTest struct {
+type farmPathTest struct {
 	FS   fs.FS
 	Path string
 	Want error
 }
 
-var farmRuleTests = map[string]farmRuleTest{
+var farmPathTests = map[string]farmPathTest{
 	"path to dir with .farm file is good": {
 		FS: fstest.MapFS{
 			"path/to/dir-with-farm-file/.farm": regularFile(),
@@ -49,8 +49,8 @@ var farmRuleTests = map[string]farmRuleTest{
 	},
 }
 
-func TestFarmPathRules(t *testing.T) {
-	for name, test := range farmRuleTests {
+func TestCheckFarmPath(t *testing.T) {
+	for name, test := range farmPathTests {
 		t.Run(name, func(t *testing.T) {
 			got := CheckIsFarm(test.FS, test.Path)
 			if !errors.Is(got, test.Want) {

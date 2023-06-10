@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-func CheckSourcePathRules(f fs.FS, path string) error {
+func CheckSourcePath(f fs.FS, path string) error {
 	info, err := fs.Stat(f, path)
 	if err != nil {
 		return fmt.Errorf("source path: %w", err)

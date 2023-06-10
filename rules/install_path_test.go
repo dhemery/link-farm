@@ -7,13 +7,13 @@ import (
 	"testing/fstest"
 )
 
-type installPathRuleTest struct {
+type installPathTest struct {
 	FS   fs.FS
 	Path string
 	Want error
 }
 
-var installPathRuleTests = map[string]installPathRuleTest{
+var installPathTests = map[string]installPathTest{
 	"path to readable dir is good": {
 		FS: fstest.MapFS{
 			"path/to/readable/dir": directory(0444),
@@ -66,8 +66,8 @@ var installPathRuleTests = map[string]installPathRuleTest{
 	},
 }
 
-func TestInstallPathRules(t *testing.T) {
-	for name, test := range installPathRuleTests {
+func TestCheckInstallPath(t *testing.T) {
+	for name, test := range installPathTests {
 		t.Run(name, func(t *testing.T) {
 			got := CheckInstallPath(test.FS, test.Path)
 			if !errors.Is(got, test.Want) {
