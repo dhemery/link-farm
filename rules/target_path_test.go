@@ -14,6 +14,26 @@ type targetPathTest struct {
 	WantError   error
 }
 
+// TEST IDEAS
+//
+// Target Path Rules
+// - dir: target dir rules
+// - link: target link rules
+//
+// Target Dir Rules
+// - is farm: err invalid
+// - source dir: continue walking
+//	what did I mean by this?
+//
+// Target Link Rules
+// - To source
+// - To farm
+// - To package
+// - Into current package
+// - Into local package
+// - Into foreign farm
+// - Into foreign package
+
 var targetPathTests = map[string]targetPathTest{
 	"path to nowhere can link": {
 		FS: fstest.MapFS{
