@@ -2,7 +2,6 @@ package rules
 
 import (
 	"errors"
-	"io/fs"
 	"testing"
 	"testing/fstest"
 )
@@ -33,7 +32,7 @@ var sourcePathTests = map[string]sourcePathTest{
 			"path/to/link": linkTo("some/place"),
 		},
 		Path: "path/to/link",
-		Want: fs.ErrInvalid,
+		Want: ErrNotFileOrDir,
 	},
 }
 

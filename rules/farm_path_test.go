@@ -33,14 +33,14 @@ var farmPathTests = map[string]farmPathTest{
 			"path/to/dir-with-farm-dir/.farm": directory(0755),
 		},
 		Path: "path/to/dir-with-farm-dir",
-		Want: ErrNotRegular,
+		Want: ErrNotFile,
 	},
 	"path to dir with .farm link is invalid": {
 		FS: fstest.MapFS{
 			"path/to/dir-with-farm-link/.farm": linkTo("some/path"),
 		},
 		Path: "path/to/dir-with-farm-link",
-		Want: ErrNotRegular,
+		Want: ErrNotFile,
 	},
 	"path to file is invalid": {
 		FS: fstest.MapFS{

@@ -12,18 +12,19 @@ const (
 )
 
 var (
-	ErrNotDir        = errors.New("is not a directory")
-	ErrNotRegular    = errors.New("is not a regular file")
-	ErrNotExist      = errors.New("does not exist")
+	ErrCannotExecute = errors.New("cannot execute")
 	ErrCannotRead    = errors.New("cannot read")
 	ErrCannotWrite   = errors.New("cannot write")
-	ErrCannotExecute = errors.New("cannot execute")
+	ErrNotDir        = errors.New("is not a directory")
+	ErrNotExist      = errors.New("does not exist")
+	ErrNotFile       = errors.New("is not a regular file")
+	ErrNotFileOrDir  = errors.New("is not a file or directory")
 )
 
 func checkCanCreate(f fs.FS, p string) error {
 	parent := path.Dir(p)
 	info, err := fs.Stat(f, parent)
-	if errors.Is(err, fs.ErrNotExist) {
+	if !errors.Is(err, fs.ErrNotExist) {
 		return checkCanCreate(f, parent)
 	}
 	if err != nil {

@@ -31,7 +31,7 @@ func CheckIsFarm(f fs.FS, p string) error {
 		return ErrNotFarmDir
 	}
 	if !farmFileInfo.Mode().IsRegular() {
-		return fmt.Errorf("%s: %w", farmFilePath, ErrNotRegular)
+		return fmt.Errorf("%s: %w", farmFilePath, ErrNotFile)
 	}
 
 	return nil
