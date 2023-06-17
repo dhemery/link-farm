@@ -15,6 +15,7 @@ var (
 	ErrCannotExecute = errors.New("cannot execute")
 	ErrCannotRead    = errors.New("cannot read")
 	ErrCannotWrite   = errors.New("cannot write")
+	ErrIsFile        = errors.New("is existing file")
 	ErrNotDir        = errors.New("is not a directory")
 	ErrNotExist      = errors.New("does not exist")
 	ErrNotFile       = errors.New("is not a regular file")

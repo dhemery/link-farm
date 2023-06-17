@@ -2,7 +2,6 @@ package rules
 
 import (
 	"errors"
-	"io/fs"
 	"testing"
 	"testing/fstest"
 )
@@ -43,13 +42,13 @@ var targetPathTests = map[string]targetPathTest{
 		WantCanLink: true,
 		WantError:   nil,
 	},
-	"path to file is err exist": {
+	"path to file is invalid": {
 		FS: fstest.MapFS{
 			"path/to/file": regularFile(),
 		},
 		Path:        "path/to/file",
 		WantCanLink: false,
-		WantError:   fs.ErrExist,
+		WantError:   ErrIsFile,
 	},
 }
 

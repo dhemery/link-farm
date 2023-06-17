@@ -18,7 +18,7 @@ func CheckTargetPath(f fs.FS, path string) (bool, error) {
 	}
 	mode := info.Mode()
 	if mode.IsRegular() {
-		return false, fs.ErrExist
+		return false, ErrIsFile
 	}
 	return false, nil
 }
