@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -10,15 +11,29 @@ const (
 	farmFileName = ".farm"
 )
 
+var (
+	ErrNoFarmFile         = errors.New("has no " + farmFileName + " file")
+	ErrFarmFileNotRegular = fmt.Errorf("%s %w", farmFileName, ErrNotRegularFile)
+)
+
 func CheckIsFarm(f fs.FS, p string) error {
-	farmFilePath := path.Join(p, farmFileName)
-	info, err := fs.Stat(f, farmFilePath)
+	farmInfo, err := fs.Stat(f, p)
 	if err != nil {
-		return fmt.Errorf("missing %s file: %w", farmFileName, fs.ErrInvalid)
+		return ErrNotExist
 	}
-	if !info.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file: %w", farmFilePath, fs.ErrInvalid)
+	if !farmInfo.IsDir() {
+		return ErrNotDir
 	}
+
+	farmFilePath := path.Join(p, farmFileName)
+	farmFileInfo, err := fs.Stat(f, farmFilePath)
+	if err != nil {
+		return ErrNoFarmFile
+	}
+	if !farmFileInfo.Mode().IsRegular() {
+		return ErrFarmFileNotRegular
+	}
+
 	return nil
 }
 

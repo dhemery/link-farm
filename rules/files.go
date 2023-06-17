@@ -11,6 +11,12 @@ const (
 	fsRoot = "."
 )
 
+var (
+	ErrNotDir     = errors.New("is not a directory")
+	ErrNotRegular = errors.New("is not a regular file")
+	ErrNotExist   = errors.New("does not exist")
+)
+
 func checkCanCreate(f fs.FS, p string) error {
 	parent := path.Dir(p)
 	info, err := fs.Stat(f, parent)
