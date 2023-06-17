@@ -12,9 +12,12 @@ const (
 )
 
 var (
-	ErrNotDir     = errors.New("is not a directory")
-	ErrNotRegular = errors.New("is not a regular file")
-	ErrNotExist   = errors.New("does not exist")
+	ErrNotDir        = errors.New("is not a directory")
+	ErrNotRegular    = errors.New("is not a regular file")
+	ErrNotExist      = errors.New("does not exist")
+	ErrCannotRead    = errors.New("cannot read")
+	ErrCannotWrite   = errors.New("cannot write")
+	ErrCannotExecute = errors.New("cannot execute")
 )
 
 func checkCanCreate(f fs.FS, p string) error {
@@ -26,30 +29,42 @@ func checkCanCreate(f fs.FS, p string) error {
 	if err != nil {
 		return err
 	}
-	mode := info.Mode()
-	if !isWriteable(mode) {
-		return fmt.Errorf("%s: cannot write (mode %o): %w", p, mode, fs.ErrPermission)
-	}
-	return nil
+	return checkCanWrite(info)
 }
 
 func checkReadableDir(info fs.FileInfo) error {
 	if !info.IsDir() {
-		return fmt.Errorf("not a directory: %w", fs.ErrInvalid)
+		return ErrNotDir
 	}
-	mode := info.Mode()
-	if !isReadable(mode) {
-		return fmt.Errorf("cannot read (mode %o): %w", mode, fs.ErrPermission)
+	return checkCanRead(info)
+}
+
+const (
+	readBits  = 0444
+	writeBits = 0222
+	execBits  = 0111
+)
+
+func checkCanRead(info fs.FileInfo) error {
+	perm := info.Mode().Perm()
+	if perm&readBits == 0 {
+		return fmt.Errorf("%w: perm %04o", ErrCannotRead, perm)
 	}
 	return nil
 }
 
-func isReadable(m fs.FileMode) bool {
-	const readBits = 0444
-	return m&readBits != 0
+func checkCanWrite(info fs.FileInfo) error {
+	perm := info.Mode().Perm()
+	if perm&writeBits == 0 {
+		return fmt.Errorf("%w: perm %04o", ErrCannotWrite, perm)
+	}
+	return nil
 }
 
-func isWriteable(m fs.FileMode) bool {
-	const writeBits = 0222
-	return m&writeBits != 0
+func checkCanExecute(info fs.FileInfo) error {
+	perm := info.Mode().Perm()
+	if perm&execBits == 0 {
+		return fmt.Errorf("%w: perm %04o", ErrCannotExecute, perm)
+	}
+	return nil
 }

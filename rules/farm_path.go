@@ -12,8 +12,8 @@ const (
 )
 
 var (
-	ErrNoFarmFile         = errors.New("has no " + farmFileName + " file")
-	ErrFarmFileNotRegular = fmt.Errorf("%s %w", farmFileName, ErrNotRegularFile)
+	ErrNotFarmDir = errors.New("is not a farm dir")
+	ErrIsFarmDir  = errors.New("is a farm dir")
 )
 
 func CheckIsFarm(f fs.FS, p string) error {
@@ -28,10 +28,10 @@ func CheckIsFarm(f fs.FS, p string) error {
 	farmFilePath := path.Join(p, farmFileName)
 	farmFileInfo, err := fs.Stat(f, farmFilePath)
 	if err != nil {
-		return ErrNoFarmFile
+		return ErrNotFarmDir
 	}
 	if !farmFileInfo.Mode().IsRegular() {
-		return ErrFarmFileNotRegular
+		return fmt.Errorf("%s: %w", farmFilePath, ErrNotRegular)
 	}
 
 	return nil
@@ -52,7 +52,7 @@ func checkNotFarm(f fs.FS, p string) error {
 	farmFilePath := path.Join(p, farmFileName)
 	_, err := fs.Stat(f, farmFilePath)
 	if err == nil {
-		return fmt.Errorf("in farm %s: %w", p, fs.ErrPermission)
+		return fmt.Errorf("%s: %w", p, ErrIsFarmDir)
 	}
 	return nil
 }

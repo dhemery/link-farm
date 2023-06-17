@@ -14,7 +14,7 @@ type farmPathTest struct {
 }
 
 var farmPathTests = map[string]farmPathTest{
-	"path to dir with .farm file is good": {
+	"path to dir with .farm file is valid": {
 		FS: fstest.MapFS{
 			"path/to/dir-with-farm-file/.farm": regularFile(),
 		},
@@ -26,21 +26,21 @@ var farmPathTests = map[string]farmPathTest{
 			"path/to/dir-with-no-farm-file": directory(0755),
 		},
 		Path: "path/to/dir-with-no-farm-file",
-		Want: ErrNoFarmFile,
+		Want: ErrNotFarmDir,
 	},
 	"path to dir with .farm dir is invalid": {
 		FS: fstest.MapFS{
 			"path/to/dir-with-farm-dir/.farm": directory(0755),
 		},
 		Path: "path/to/dir-with-farm-dir",
-		Want: ErrFarmFileNotRegular,
+		Want: ErrNotRegular,
 	},
 	"path to dir with .farm link is invalid": {
 		FS: fstest.MapFS{
 			"path/to/dir-with-farm-link/.farm": linkTo("some/path"),
 		},
 		Path: "path/to/dir-with-farm-link",
-		Want: ErrFarmFileNotRegular,
+		Want: ErrNotRegular,
 	},
 	"path to file is invalid": {
 		FS: fstest.MapFS{
@@ -56,9 +56,11 @@ var farmPathTests = map[string]farmPathTest{
 		Path: "path/to/link",
 		Want: ErrNotDir,
 	},
-	"path to non-existent entry is invalid": {
-		FS:   fstest.MapFS{},
-		Path: "path/to/nothing",
+	"path to nowhere is invalid": {
+		FS: fstest.MapFS{
+			"path/to/nowhere": nil,
+		},
+		Path: "path/to/nowhere",
 		Want: ErrNotExist,
 	},
 }

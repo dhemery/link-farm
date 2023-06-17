@@ -14,38 +14,40 @@ type packagePathRuleTest struct {
 }
 
 var packagePathRuleTests = map[string]packagePathRuleTest{
-	"path to readable dir is good": {
+	"path to readable dir is valid": {
 		FS: fstest.MapFS{
 			"path/to/readable/dir": directory(0444),
 		},
 		Path: "path/to/readable/dir",
 		Want: nil,
 	},
-	"path to unreadable dir is permission error": {
+	"path to unreadable dir is invalid": {
 		FS: fstest.MapFS{
 			"path/to/unreadable/dir": directory(0333),
 		},
 		Path: "path/to/unreadable/dir",
-		Want: fs.ErrPermission,
+		Want: ErrCannotRead,
 	},
 	"path to link is invalid": {
 		FS: fstest.MapFS{
 			"path/to/link": linkTo("some/place"),
 		},
 		Path: "path/to/link",
-		Want: fs.ErrInvalid,
+		Want: ErrNotDir,
 	},
 	"path to file is invalid": {
 		FS: fstest.MapFS{
 			"path/to/file": regularFile(),
 		},
 		Path: "path/to/file",
-		Want: fs.ErrInvalid,
+		Want: ErrNotDir,
 	},
-	"path to non-existent file is not exist error": {
-		FS:   fstest.MapFS{},
-		Path: "path/to/non-existent/file",
-		Want: fs.ErrNotExist,
+	"path to nowhere is invalid": {
+		FS: fstest.MapFS{
+			"path/to/nowhere": nil,
+		},
+		Path: "path/to/nowhere",
+		Want: ErrNotExist,
 	},
 }
 
