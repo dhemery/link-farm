@@ -18,5 +18,5 @@ func CheckInstallPath(f fs.FS, p string) error {
 		fmt.Println("error from", p, err.Error())
 		return err
 	}
-	return checkNotInFarm(f, p)
+	return checkNotInDuffelDir(f, p)
 }

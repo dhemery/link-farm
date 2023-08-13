@@ -5,12 +5,12 @@ import (
 	"os"
 	"path"
 
-	"dhemery.com/tree-farm/rules"
+	"dhemery.com/duffel/rules"
 )
 
 func main() {
 	root := os.DirFS("example")
-	farmPath := "farm"
+	duffelPath := "duffel"
 	installPath := "install"
 	packages := []string{
 		"shared-1",
@@ -20,8 +20,8 @@ func main() {
 
 	exitCode := 0
 
-	if err := rules.CheckIsFarm(root, farmPath); err != nil {
-		log.Printf("invalid farm path %s: %s", installPath, err)
+	if err := rules.CheckIsDuffelDir(root, duffelPath); err != nil {
+		log.Printf("invalid duffel path %s: %s", installPath, err)
 		exitCode = 1
 	}
 	if err := rules.CheckInstallPath(root, installPath); err != nil {
@@ -30,7 +30,7 @@ func main() {
 	}
 
 	for _, name := range packages {
-		packagePath := path.Join(farmPath, name)
+		packagePath := path.Join(duffelPath, name)
 		if err := rules.CheckPackagePath(root, packagePath); err != nil {
 			log.Printf("invalid package path %s: %s", packagePath, err)
 			exitCode = 1

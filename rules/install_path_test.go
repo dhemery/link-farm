@@ -49,21 +49,21 @@ var installPathTests = map[string]installPathTest{
 		Path: "path/to/file",
 		Want: ErrNotDir,
 	},
-	"path to farm dir is invalid": {
+	"path to duffel dir is invalid": {
 		FS: fstest.MapFS{
-			"path/to/farm-dir":       directory(0755),
-			"path/to/farm-dir/.farm": regularFile(),
+			"path/to/duffel-dir":         directory(0755),
+			"path/to/duffel-dir/.duffel": regularFile(),
 		},
-		Path: "path/to/farm-dir",
-		Want: ErrIsFarmDir,
+		Path: "path/to/duffel-dir",
+		Want: ErrIsDuffelDir,
 	},
-	"path to dir inside farm is invalid": {
+	"path to dir inside duffel is invalid": {
 		FS: fstest.MapFS{
-			"path/to/farm-dir/.farm":                   regularFile(),
-			"path/to/farm-dir/dir/dir/dir-inside-farm": directory(0755),
+			"path/to/duffel-dir/.duffel":                       regularFile(),
+			"path/to/duffel-dir/dir/dir/dir-inside-duffel-dir": directory(0755),
 		},
-		Path: "path/to/farm-dir/dir/dir/dir-inside-farm",
-		Want: ErrIsFarmDir,
+		Path: "path/to/duffel-dir/dir/dir/dir-inside-duffel-dir",
+		Want: ErrIsDuffelDir,
 	},
 }
 
