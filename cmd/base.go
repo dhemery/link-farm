@@ -1,6 +1,10 @@
 package cmd
 
-import "flag"
+import (
+	"flag"
+	"fmt"
+	"os"
+)
 
 var All = []*Command{}
 
@@ -11,4 +15,19 @@ type Command struct {
 	ShortHelp string
 	FullHelp  string
 	Flags     *flag.FlagSet
+}
+
+func (cmd *Command) Usage() {
+	fmt.Fprintln(os.Stderr, cmd.UsageLine)
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, cmd.FullHelp)
+}
+
+func FindCommand(name string) (*Command, bool) {
+	for _, c := range All {
+		if c.Name == name {
+			return c, true
+		}
+	}
+	return nil, false
 }
