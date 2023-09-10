@@ -4,7 +4,7 @@ import (
 	"io/fs"
 )
 
-func CheckSourcePath(f fs.FS, path string) error {
+func CheckSourceFile(f fs.FS, path string) error {
 	info, err := fs.Stat(f, path)
 	if err != nil {
 		return ErrNotExist

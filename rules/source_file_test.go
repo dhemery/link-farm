@@ -39,7 +39,7 @@ var sourcePathTests = map[string]sourcePathTest{
 func TestCheckSourcePath(t *testing.T) {
 	for name, test := range sourcePathTests {
 		t.Run(name, func(t *testing.T) {
-			got := CheckSourcePath(test.FS, test.Path)
+			got := CheckSourceFile(test.FS, test.Path)
 			if !errors.Is(got, test.Want) {
 				t.Errorf("got error %v, want %v", got, test.Want)
 			}
