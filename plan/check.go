@@ -9,7 +9,7 @@ import (
 	"dhemery.com/duffel/rules"
 )
 
-func MakePlan(duffelPath string, installPath string, packages ...string) error {
+func MakePlan(duffelPath string, installPath string, packages []string) error {
 	fsys, err := findFS(duffelPath, installPath)
 	if err != nil {
 		return err

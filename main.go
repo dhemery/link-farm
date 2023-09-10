@@ -5,20 +5,21 @@ import (
 	"fmt"
 	"os"
 
-	"dhemery.com/duffel/cmd"
-	"dhemery.com/duffel/plan"
+	"dhemery.com/duffel/cmd/base"
+	"dhemery.com/duffel/cmd/help"
+	"dhemery.com/duffel/cmd/link"
 )
 
 func init() {
-	cmd.All = []*cmd.Command{
-		cmd.Link,
-		cmd.Relink,
-		cmd.Unlink,
+	base.Commands = []*base.Command{
+		link.CmdLink,
+		link.CmdUnlink,
+		help.CmdHelp,
 	}
 }
 
 func main() {
-	flag.Usage = cmd.Duffel.Usage
+	flag.Usage = help.Usage
 	flag.Parse()
 
 	args := flag.Args()
@@ -28,28 +29,16 @@ func main() {
 		os.Exit(2)
 	}
 
-	duffelPath := "duffel"
-	installPath := "install"
-	packages := []string{
-		"shared-1",
-		"shared-2",
-		"distinct",
-	}
-
-	c,ok := cmd.FindCommand(args[0])
+	cmdName := args[0]
+	cmd, ok := base.FindCommand(cmdName)
 	if !ok {
+		fmt.Fprintln(os.Stderr, "no such command:", cmdName)
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	err := c.Run(c, args[1:])
+	err := cmd.Run(cmd, args[1:])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-	}
-
-	err = plan.MakePlan(duffelPath, installPath, packages...)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
 	}
 }
